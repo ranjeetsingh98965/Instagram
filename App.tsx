@@ -11,8 +11,8 @@ import HomeScreen from './src/pages/HomeScreen';
 import UploadScreen from './src/pages/UploadScreen';
 import SearchScreen from './src/pages/SearchScreen';
 import AccountScreen from './src/pages/AccountScreen';
-import LikeScreen from './src/pages/LikeScreen';
 import SplashScreen from './src/pages/SplashScreen';
+import NotificationScreen from './src/pages/NotificationScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -102,8 +102,8 @@ const App = () => {
           }}
         />
         <Tab.Screen
-          name="Like"
-          component={LikeScreen}
+          name="notification"
+          component={NotificationScreen}
           options={{
             headerShown: false,
             tabBarShowLabel: false,

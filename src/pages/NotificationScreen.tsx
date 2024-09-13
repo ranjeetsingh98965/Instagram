@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 
-const LikeScreen = () => {
+const NotificationScreen = () => {
   return (
     <View
       style={{
@@ -10,8 +10,8 @@ const LikeScreen = () => {
         alignItems: 'center',
         backgroundColor: '#000',
       }}>
-      <Text>Comment Screen</Text>
+      <Text>Notification Screen</Text>
     </View>
   );
 };
-export default LikeScreen;
+export default NotificationScreen;

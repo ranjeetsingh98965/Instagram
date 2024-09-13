@@ -66,8 +66,12 @@ const SignupScreen = () => {
         contentContainerStyle={{
           flex: 1,
         }}>
-        <StatusBar hidden={true} backgroundColor={'#000'} />
-
+        <StatusBar
+          backgroundColor={'#000'}
+          animated={true}
+          barStyle={'light-content'}
+          hidden={false}
+        />
         {/* logo */}
         <View
           style={{
