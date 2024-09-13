@@ -1,118 +1,185 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {Text, View} from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {NavigationContainer} from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import LoginScreen from './src/pages/LoginScreen';
+import SignupScreen from './src/pages/SignupScreen';
+import HomeScreen from './src/pages/HomeScreen';
+import UploadScreen from './src/pages/UploadScreen';
+import SearchScreen from './src/pages/SearchScreen';
+import AccountScreen from './src/pages/AccountScreen';
+import LikeScreen from './src/pages/LikeScreen';
+import SplashScreen from './src/pages/SplashScreen';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
+const App = () => {
+  const BottomNavigationBar = () => {
+    return (
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: {
+            backgroundColor: '#000',
+            borderTopWidth: 0,
+            // borderColor: '#fff',
+            // borderRadius: 10,
           },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+        }}>
+        <Tab.Screen
+          name="home"
+          component={HomeScreen}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => {
+              return (
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                  }}>
+                  <MaterialCommunityIcons
+                    name="home"
+                    color={focused ? '#fff' : 'grey'}
+                    size={20}
+                  />
+                </View>
+              );
+            },
+          }}
+        />
+        <Tab.Screen
+          name="search"
+          component={SearchScreen}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => {
+              return (
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                  }}>
+                  <Feather
+                    name="search"
+                    color={focused ? '#fff' : 'grey'}
+                    size={20}
+                  />
+                </View>
+              );
+            },
+          }}
+        />
+        <Tab.Screen
+          name="upload"
+          component={UploadScreen}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => {
+              return (
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                  }}>
+                  <Feather
+                    name="plus-circle"
+                    color={focused ? '#fff' : 'grey'}
+                    size={20}
+                  />
+                </View>
+              );
+            },
+          }}
+        />
+        <Tab.Screen
+          name="Like"
+          component={LikeScreen}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => {
+              return (
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                  }}>
+                  <MaterialCommunityIcons
+                    name="cards-heart"
+                    color={focused ? '#fff' : 'grey'}
+                    size={20}
+                  />
+                </View>
+              );
+            },
+          }}
+        />
+        <Tab.Screen
+          name="account"
+          component={AccountScreen}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => {
+              return (
+                <View
+                  style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                  }}>
+                  <MaterialCommunityIcons
+                    name="account"
+                    color={focused ? '#fff' : 'grey'}
+                    size={20}
+                  />
+                </View>
+              );
+            },
+          }}
+        />
+      </Tab.Navigator>
+    );
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={{flex: 1, backgroundColor: '#000'}}>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="splash">
+          <Stack.Screen
+            name="splash"
+            component={SplashScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="login"
+            component={LoginScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="signup"
+            component={SignupScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="feed"
+            component={BottomNavigationBar}
+            options={{headerShown: false}}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
+};
 export default App;
