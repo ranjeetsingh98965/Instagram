@@ -156,7 +156,7 @@ const App = () => {
   return (
     <View style={{flex: 1, backgroundColor: '#000'}}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="splash">
+        <Stack.Navigator initialRouteName="feed">
           <Stack.Screen
             name="splash"
             component={SplashScreen}
