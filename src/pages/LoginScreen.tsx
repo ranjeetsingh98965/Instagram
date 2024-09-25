@@ -1,7 +1,10 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
+  BackHandler,
   Image,
+  Modal,
   ScrollView,
   StatusBar,
   Text,
@@ -10,10 +13,58 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import warningSnackbar from '../components/SnackBars/warningSnackbar';
+import auth from '@react-native-firebase/auth';
+import failedSnackbar from '../components/SnackBars/failedSnackbar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp();
+      return true; // Prevent the default back action
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove(); // Clean up the listener on unmount
+  }, []);
+
+  const HandleLogin = async () => {
+    if (email != '' && password != null) {
+      setLoading(true);
+      try {
+        const userCredential = await auth().signInWithEmailAndPassword(
+          email,
+          password,
+        );
+        navigation.replace('feed');
+        setLoading(false);
+        await AsyncStorage.setItem(
+          'userId',
+          JSON.stringify(userCredential.user.uid),
+        );
+        console.log('userData: ', userCredential.user.uid);
+      } catch (error) {
+        setLoading(false);
+        warningSnackbar(
+          error.message || 'Something went wrong. Please try again.',
+        );
+        console.log(error.message);
+      }
+    } else {
+      warningSnackbar('All fields are required.');
+    }
+  };
+
   return (
     <>
       <ScrollView
@@ -97,12 +148,14 @@ const LoginScreen = () => {
                 style={{color: '#fff'}}
                 onChangeText={txt => setPassword(txt)}
                 value={password}
+                secureTextEntry={true}
               />
             </View>
           </View>
 
           {/* Login Btn */}
           <TouchableOpacity
+            onPress={HandleLogin}
             style={{
               width: '95%',
               borderRadius: 4,
@@ -112,7 +165,11 @@ const LoginScreen = () => {
               alignItems: 'center',
               marginTop: 30,
             }}>
-            <Text style={{fontSize: 16, color: '#fff'}}>Log in</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" size={20} />
+            ) : (
+              <Text style={{fontSize: 16, color: '#fff'}}>Log in</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

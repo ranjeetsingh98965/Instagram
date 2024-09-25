@@ -1,16 +1,28 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Image, StatusBar, Text, View} from 'react-native';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const subscription = setTimeout(() => {
-      navigation.replace('login');
+    getUserCerdentials();
+  }, []);
+
+  const getUserCerdentials = async () => {
+    const userId = await AsyncStorage.getItem('userId');
+    // console.log('lolo: ', userId);
+    setTimeout(() => {
+      if (userId != '' && userId != null) {
+        navigation.replace('feed');
+      } else {
+        navigation.replace('login');
+      }
     }, 1500);
     return () => clearTimeout(subscription);
-  }, []);
+  };
+
   return (
     <>
       <StatusBar hidden={true} backgroundColor={'#000'} />
