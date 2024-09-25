@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import React, {useRef, useState} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -26,6 +27,7 @@ const feedData = [
     post_img:
       'https://images.pexels.com/photos/600107/pexels-photo-600107.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
     likes: '45',
+    isLiked: 1,
     first_comment: 'Advanture',
     post_date: 'Sept 7, 2024',
   },
@@ -37,6 +39,7 @@ const feedData = [
     post_img:
       'https://images.pexels.com/photos/14553268/pexels-photo-14553268.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
     likes: '4k',
+    isLiked: 0,
     first_comment: 'Awesome',
     post_date: 'july 21, 2024',
   },
@@ -48,6 +51,7 @@ const feedData = [
     post_img:
       'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg?auto=compress&cs=tinysrgb&w=600',
     likes: '529',
+    isLiked: 0,
     first_comment: 'nice',
     post_date: 'Sept 12, 2024',
   },
@@ -73,6 +77,7 @@ const commentList = [
 ];
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const [commentModal, setCommentModal] = useState(false);
   const [commentsMessage, setCommentsMessage] = useState('');
 
@@ -126,7 +131,8 @@ const HomeScreen = () => {
                   paddingHorizontal: 10,
                   paddingVertical: 10,
                 }}>
-                <View
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('checkprofile')}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -145,25 +151,27 @@ const HomeScreen = () => {
                       {item.name}
                     </Text>
                   </View>
-                </View>
+                </TouchableOpacity>
                 <View>
                   <Icon name="dots-vertical" size={20} color={'#fff'} />
                 </View>
               </View>
 
               {/* image */}
-              <View>
+              <View
+                style={{
+                  width: '100%',
+                  height: (windowHeight * 30) / 100,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
                 <Image
-                  source={{
-                    uri: item.post_img,
-                  }}
-                  style={{
-                    width: '100%',
-                    height: (windowHeight * 30) / 100,
-                  }}
+                  source={{uri: item.post_img}}
+                  style={{width: '100%', height: '100%'}}
                   resizeMode="cover"
                 />
               </View>
+
               {/* card footer */}
               <View
                 style={{
@@ -174,9 +182,16 @@ const HomeScreen = () => {
                   paddingVertical: 10,
                 }}>
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color={'#fff'} />
-                  </TouchableOpacity>
+                  {item.isLiked ? (
+                    <TouchableOpacity>
+                      <Icon name="heart" size={20} color={'red'} />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity>
+                      <Icon name="heart-outline" size={20} color={'#fff'} />
+                    </TouchableOpacity>
+                  )}
+
                   <TouchableOpacity
                     style={{paddingHorizontal: 20}}
                     onPress={() => setCommentModal(true)}>
