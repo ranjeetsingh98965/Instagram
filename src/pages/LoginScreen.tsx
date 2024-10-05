@@ -17,6 +17,8 @@ import warningSnackbar from '../components/SnackBars/warningSnackbar';
 import auth from '@react-native-firebase/auth';
 import failedSnackbar from '../components/SnackBars/failedSnackbar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import {BASE_URL} from '@env';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -52,7 +54,15 @@ const LoginScreen = () => {
           'userId',
           JSON.stringify(userCredential.user.uid),
         );
-        console.log('userData: ', userCredential.user.uid);
+        // console.log('userData: ', userCredential.user.uid);
+
+        const userData = {
+          email: email,
+          password: password,
+        };
+        let res = await axios.post(`${BASE_URL}login`, userData);
+        // console.log('res: ', res.data.data[0].id);
+        await AsyncStorage.setItem('userId', res.data.data[0].id);
       } catch (error) {
         setLoading(false);
         warningSnackbar(
@@ -155,6 +165,7 @@ const LoginScreen = () => {
 
           {/* Login Btn */}
           <TouchableOpacity
+            disabled={loading ? true : false}
             onPress={HandleLogin}
             style={{
               width: '95%',

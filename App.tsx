@@ -13,7 +13,7 @@ import SearchScreen from './src/pages/SearchScreen';
 import AccountScreen from './src/pages/AccountScreen';
 import SplashScreen from './src/pages/SplashScreen';
 import NotificationScreen from './src/pages/NotificationScreen';
-import checkProfile from './src/pages/checkProfile';
+import CheckProfile from './src/pages/CheckProfile';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -22,6 +22,7 @@ const App = () => {
   const BottomNavigationBar = () => {
     return (
       <Tab.Navigator
+        initialRouteName="home"
         screenOptions={{
           tabBarStyle: {
             backgroundColor: '#000',
@@ -180,7 +181,7 @@ const App = () => {
           />
           <Stack.Screen
             name="checkprofile"
-            component={checkProfile}
+            component={CheckProfile}
             options={{headerShown: false}}
           />
         </Stack.Navigator>

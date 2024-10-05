@@ -1,27 +1,45 @@
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
+import React, {useState} from 'react';
 import {
   Dimensions,
   FlatList,
   Image,
+  Modal,
   SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import ImageViewer from 'react-native-image-zoom-viewer';
+import {ActivityIndicator} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 const AccountScreen = () => {
+  const navigation = useNavigation();
+  const [selectedImage, setSelectedImage] = useState('');
+  const [viewImageModal, setViewImageModal] = useState(false);
+
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',
     'https://images.pexels.com/photos/36487/above-adventure-aerial-air.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
     'https://images.pexels.com/photos/326900/pexels-photo-326900.jpeg',
   ];
 
-  const navigation = useNavigation();
+  const signOut = async () => {
+    try {
+      await auth().signOut();
+      await AsyncStorage.clear();
+      navigation.replace('login');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#000'}}>
       {/* header */}
@@ -77,6 +95,7 @@ const AccountScreen = () => {
             </View>
           </View>
           <TouchableOpacity
+            onPress={signOut}
             style={{
               padding: 5,
               backgroundColor: '#000',
@@ -110,7 +129,12 @@ const AccountScreen = () => {
         contentContainerStyle={{marginTop: 15}}
         renderItem={({index}) => {
           return (
-            <View style={{}}>
+            <TouchableOpacity
+              style={{}}
+              onPress={() => {
+                setSelectedImage(imageData[index]);
+                setViewImageModal(true);
+              }}>
               <Image
                 source={{uri: imageData[index]}}
                 style={{
@@ -121,10 +145,49 @@ const AccountScreen = () => {
                 }}
                 resizeMode="cover"
               />
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
+      {/* view Image */}
+      <Modal
+        visible={viewImageModal}
+        animationType="fade"
+        onRequestClose={() => setViewImageModal(false)}>
+        <View style={{flex: 1, backgroundColor: '#000'}}>
+          {/* header */}
+          <TouchableOpacity
+            onPress={() => setViewImageModal(false)}
+            style={{position: 'absolute', zIndex: 99, top: 10, left: 10}}>
+            <Icon name="arrow-left" size={22} color={'#fff'} />
+          </TouchableOpacity>
+
+          <ImageViewer
+            imageUrls={[
+              {
+                url: selectedImage,
+              },
+            ]}
+            onSwipeDown={() => setViewImageModal(false)}
+            enableSwipeDown={true}
+            renderIndicator={() => null}
+            loadingRender={() => (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <ActivityIndicator size="large" color="#fff" />
+              </View>
+            )}
+            style={{
+              width: windowWidth,
+              height: windowHeight,
+            }}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

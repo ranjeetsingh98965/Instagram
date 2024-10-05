@@ -1,21 +1,26 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
+  Modal,
   SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import ImageViewer from 'react-native-image-zoom-viewer';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-const checkProfile = () => {
+const CheckProfile = () => {
   const [isFollow, setIsFollow] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [viewImageModal, setViewImageModal] = useState(false);
 
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',
@@ -138,7 +143,12 @@ const checkProfile = () => {
         contentContainerStyle={{marginTop: 15}}
         renderItem={({index}) => {
           return (
-            <View style={{}}>
+            <TouchableOpacity
+              style={{}}
+              onPress={() => {
+                setSelectedImage(imageData[index]);
+                setViewImageModal(true);
+              }}>
               <Image
                 source={{uri: imageData[index]}}
                 style={{
@@ -149,11 +159,50 @@ const checkProfile = () => {
                 }}
                 resizeMode="cover"
               />
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
+      {/* view Image */}
+      <Modal
+        visible={viewImageModal}
+        animationType="fade"
+        onRequestClose={() => setViewImageModal(false)}>
+        <View style={{flex: 1, backgroundColor: '#000'}}>
+          {/* header */}
+          <TouchableOpacity
+            onPress={() => setViewImageModal(false)}
+            style={{position: 'absolute', zIndex: 99, top: 10, left: 10}}>
+            <Icon name="arrow-left" size={22} color={'#fff'} />
+          </TouchableOpacity>
+
+          <ImageViewer
+            imageUrls={[
+              {
+                url: selectedImage,
+              },
+            ]}
+            onSwipeDown={() => setViewImageModal(false)}
+            enableSwipeDown={true}
+            renderIndicator={() => null}
+            loadingRender={() => (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <ActivityIndicator size="large" color="#fff" />
+              </View>
+            )}
+            style={{
+              width: windowWidth,
+              height: windowHeight,
+            }}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
-export default checkProfile;
+export default CheckProfile;

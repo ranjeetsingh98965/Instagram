@@ -2,6 +2,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {
   BackHandler,
+  Dimensions,
   Image,
   Keyboard,
   Modal,
@@ -23,10 +24,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ActivityIndicator} from 'react-native-paper';
 import DeviceInfo from 'react-native-device-info';
 import firestore from '@react-native-firebase/firestore';
+import axios from 'axios';
+import {BASE_URL} from '@env';
+import ImageCropPicker from 'react-native-image-crop-picker';
+
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 const SignupScreen = () => {
   const navigation = useNavigation();
   const [userImage, setUserImage] = useState('');
+  const [imageName, setImageName] = useState('');
+  const [userImageDetail, setUserImageDetail] = useState({});
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUserName] = useState('');
@@ -131,6 +140,7 @@ const SignupScreen = () => {
               messageSnackbar(
                 'Verification email sent. Please verify your email.',
               );
+              console.log('bta bhai: ', typeof userCredential.user.uid);
               // Store user data in AsyncStorage
               const userData = {
                 uid: userCredential.user.uid,
@@ -139,18 +149,6 @@ const SignupScreen = () => {
                 photoURL: userImage,
                 password: password,
               };
-              await AsyncStorage.setItem('userData', JSON.stringify(userData));
-              await AsyncStorage.setItem(
-                'userId',
-                JSON.stringify(userData.uid),
-              );
-
-              // Get device info
-              // const deviceInfo = {
-              //   brand: DeviceInfo.getBrand(),
-              //   model: DeviceInfo.getModel(),
-              //   systemVersion: DeviceInfo.getSystemVersion(),
-              // };
 
               const deviceInfo = {
                 brand: await DeviceInfo.getBrand(),
@@ -181,6 +179,36 @@ const SignupScreen = () => {
                   bio, // Include the bio in the user data
                   createdAt: firestore.FieldValue.serverTimestamp(), // Add timestamp
                 });
+
+              let formData = new FormData();
+              formData.append('uid', userCredential.user.uid);
+              formData.append('username', username);
+              formData.append('email', userCredential.user.email);
+              formData.append('password', password);
+              formData.append('bio', bio);
+              formData.append('deviceinfo', 'info');
+              formData.append('image', {
+                name: imageName,
+                type: userImageDetail.mime,
+                uri: userImageDetail.path,
+              });
+
+              const headers = {
+                'Content-Type': 'multipart/form-data',
+              };
+
+              // console.log('data: ', formData);
+              let res = await axios.post(`${BASE_URL}register`, formData, {
+                headers,
+              });
+              // console.log(
+              //   'res: ',
+              //   res.data.data[0].id,
+              //   ' , ',
+              //   typeof res.data.data[0].id,
+              // );
+
+              await AsyncStorage.setItem('userId', res.data.data[0].id);
 
               const verificationCheckInterval = setInterval(async () => {
                 await auth().currentUser.reload(); // Reload the user's info
@@ -252,22 +280,47 @@ const SignupScreen = () => {
     }
   };
 
-  const pickImage = () => {
-    const options = {
-      mediaType: 'photo',
-    };
+  // const pickImage = () => {
+  //   const options = {
+  //     mediaType: 'photo',
+  //   };
 
-    launchImageLibrary(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
-      } else {
-        const uri = response.assets[0].uri;
+  //   launchImageLibrary(options, response => {
+  //     if (response.didCancel) {
+  //       console.log('User cancelled image picker');
+  //     } else if (response.error) {
+  //       console.log('ImagePicker Error: ', response.error);
+  //     } else {
+  //       const uri = response.assets[0].uri;
+  //       setUserImage(uri);
+  //       console.log('image lele: ', userImage);
+  //     }
+  //   });
+  // };
+
+  const pickImage = () => {
+    ImageCropPicker.openPicker({
+      mediaType: 'photo',
+      cropping: true,
+      width: windowWidth,
+      height: (windowHeight * 40) / 100,
+      // includeBase64: true,
+    })
+      .then(image => {
+        const uri = image.path;
+        const imageName = uri.substring(uri.lastIndexOf('/') + 1);
+        setImageName(imageName);
         setUserImage(uri);
-        console.log('image lele: ', userImage);
-      }
-    });
+        setUserImageDetail(image);
+        console.log('Cropped image URI: ', image);
+        console.log(
+          'Cropped image URL: ',
+          uri.substring(uri.lastIndexOf('/') + 1),
+        );
+      })
+      .catch(error => {
+        console.log('ImagePicker Error: ', error);
+      });
   };
 
   return (
@@ -451,8 +504,9 @@ const SignupScreen = () => {
             </View>
           </View>
 
-          {/* Login Btn */}
+          {/* Signup Btn */}
           <TouchableOpacity
+            disabled={loading ? true : false}
             onPress={() => {
               handleSignup();
             }}
