@@ -65,25 +65,6 @@ const feedData = [
   },
 ];
 
-const commentList = [
-  {
-    id: 1,
-    name: 'Happy',
-    user_img:
-      'https://images.pexels.com/photos/1559486/pexels-photo-1559486.jpeg?auto=compress&cs=tinysrgb&w=600',
-    comment: 'awesome',
-    date: 'Jul 8, 2024',
-  },
-  {
-    id: 2,
-    name: 'Lily',
-    user_img:
-      'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    comment: 'Beautiful',
-    date: 'Jul 9, 2024',
-  },
-];
-
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [commentModal, setCommentModal] = useState(false);
@@ -93,6 +74,7 @@ const HomeScreen = () => {
   const [downloadImgLoading, setDownloadImgLoading] = useState(false);
   const [commentData, setCommentData] = useState([]);
   const [commentDataLoading, setCommentDataLoading] = useState(false);
+  const [addcommentLoading, setAddCommentLoading] = useState(false);
 
   const downloadImage = async (imageUrl, imageName) => {
     setDownloadImgLoading(true);
@@ -159,6 +141,46 @@ const HomeScreen = () => {
       console.log('get comment err: ', err);
       failedSnackbar('Something went wrong!');
       setCommentDataLoading(false);
+    }
+  };
+
+  const addComment = async () => {
+    setAddCommentLoading(true);
+    try {
+      const user_id = await AsyncStorage.getItem('userId');
+      const data = {
+        user_id: 17,
+        post_id: 5,
+        comment: commentsMessage,
+      };
+      let res = await axios.post(`${BASE_URL}insert_comment`, data);
+      console.log('add comment res: ', res.data.status);
+      if (res.data.status) {
+        const newId = (commentData.length + 1).toString();
+        const newCreatedAt = new Date()
+          .toISOString()
+          .slice(0, 19)
+          .replace('T', ' ');
+        const newCommentData = {
+          id: newId,
+          post_id: '5',
+          user_id: '17',
+          comment: commentsMessage,
+          created_at: newCreatedAt,
+          username: 'Dark',
+          profile_picture:
+            'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        };
+        setCommentData([newCommentData, ...commentData]);
+        setCommentsMessage('');
+      } else {
+        failedSnackbar('Something went wrong!');
+      }
+      setAddCommentLoading(false);
+    } catch (err) {
+      console.log('add comment err: ', err);
+      setAddCommentLoading(false);
+      failedSnackbar('Something went wrong!');
     }
   };
 
@@ -369,13 +391,16 @@ const HomeScreen = () => {
               </Text>
             </View>
           </View>
+
           {!commentDataLoading ? (
             <>
               {commentData.length > 0 ? (
                 <>
                   {/* list of comments */}
+
                   <FlatList
-                    contentContainerStyle={{flex: 1}}
+                    showsVerticalScrollIndicator={false}
+                    style={{flex: 1}}
                     data={commentData}
                     renderItem={({item}) => {
                       return (
@@ -384,31 +409,44 @@ const HomeScreen = () => {
                             flexDirection: 'row',
                             alignItems: 'center',
                             paddingHorizontal: 10,
-                            marginTop: 15,
+                            marginTop: 20,
                           }}>
-                          <View>
+                          <View
+                            style={{
+                              height: '100%',
+                              justifyContent: 'flex-start',
+                            }}>
                             <Image
                               source={{
                                 uri: 'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
                               }}
-                              style={{width: 35, height: 35, borderRadius: 50}}
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 50,
+                              }}
                             />
                           </View>
                           <View style={{flex: 1, marginHorizontal: 10}}>
                             <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                              {/* {item.name}{' '} */}
+                              {item.username}
+                              {'  '}
                               <Text
-                                style={{color: '#fff', fontWeight: 'normal'}}>
-                                {item.comment}
+                                style={{
+                                  fontSize: 10,
+                                  color: 'grey',
+                                  marginTop: 2,
+                                }}>
+                                {formatDate(item.created_at)}
                               </Text>
                             </Text>
                             <Text
                               style={{
-                                fontSize: 10,
-                                color: 'grey',
+                                color: '#fff',
+                                fontWeight: 'normal',
                                 marginTop: 2,
                               }}>
-                              {formatDate(item.created_at)}
+                              {item.comment}
                             </Text>
                           </View>
                           {/* <View>
@@ -440,6 +478,7 @@ const HomeScreen = () => {
                   flexDirection: 'row',
                   paddingHorizontal: 10,
                   alignItems: 'center',
+                  paddingVertical: 5,
                 }}>
                 <View>
                   <Image
@@ -462,16 +501,34 @@ const HomeScreen = () => {
                     value={commentsMessage}
                   />
                 </View>
-                <View>
-                  <Text style={{color: '#0095F6', fontWeight: 'bold'}}>
-                    POST
-                  </Text>
-                </View>
+                <TouchableOpacity
+                  disabled={
+                    commentsMessage == '' ||
+                    commentsMessage == null ||
+                    addcommentLoading
+                      ? true
+                      : false
+                  }
+                  onPress={() => {
+                    addComment();
+                  }}>
+                  {!addcommentLoading ? (
+                    <Text style={{color: '#0095F6', fontWeight: 'bold'}}>
+                      POST
+                    </Text>
+                  ) : (
+                    <ActivityIndicator size={20} color="#fff" />
+                  )}
+                </TouchableOpacity>
               </View>
             </>
           ) : (
             <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <ActivityIndicator size="large" color="#fff" />
             </View>
           )}

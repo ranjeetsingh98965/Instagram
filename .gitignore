@@ -75,3 +75,6 @@ yarn-error.log
 
 # environment variable
 .env
+
+#google services
+google-services.json
