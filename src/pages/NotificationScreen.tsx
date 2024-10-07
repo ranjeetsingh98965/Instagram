@@ -1,6 +1,7 @@
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {
+  BackHandler,
   Image,
   SafeAreaView,
   ScrollView,
@@ -12,6 +13,23 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const NotificationScreen = () => {
   const navigation = useNavigation();
+
+  // back button handle
+  const backButtonHandler = () => {
+    navigation.goBack();
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backButtonHandler,
+      );
+      return () => backHandler.remove();
+    }, []),
+  );
+  //  End back handle
 
   const notificationData = [
     {

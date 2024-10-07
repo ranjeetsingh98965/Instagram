@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   View,
@@ -9,19 +9,39 @@ import {
   Modal,
   Touchable,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import {ActivityIndicator} from 'react-native-paper';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 const SearchScreen = () => {
+  const navigation = useNavigation();
   const [searchText, setSearchText] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
   const [viewImageModal, setViewImageModal] = useState(false);
+
+  // back button handle
+  const backButtonHandler = () => {
+    navigation.goBack();
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backButtonHandler,
+      );
+      return () => backHandler.remove();
+    }, []),
+  );
+  //  End back handle
 
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',
@@ -67,6 +87,7 @@ const SearchScreen = () => {
 
       {/* Images */}
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={imageData}
         numColumns={3}
         renderItem={({index}) => {

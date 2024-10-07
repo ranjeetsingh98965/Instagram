@@ -12,6 +12,10 @@ import {
   TouchableOpacity,
   View,
   TextInput,
+  BackHandler,
+  RefreshControl,
+  Platform,
+  ToastAndroid,
 } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import {ActivityIndicator} from 'react-native-paper';
@@ -21,7 +25,9 @@ import failedSnackbar from '../components/SnackBars/failedSnackbar';
 import RNFetchBlob from 'react-native-blob-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {BASE_URL} from '@env';
+import {BASE_URL, PROFILE_PIC_URL, POST_IMAGE_URL} from '@env';
+import RNFS from 'react-native-fs';
+import LottieView from 'lottie-react-native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -75,12 +81,48 @@ const HomeScreen = () => {
   const [commentData, setCommentData] = useState([]);
   const [commentDataLoading, setCommentDataLoading] = useState(false);
   const [addcommentLoading, setAddCommentLoading] = useState(false);
+  const [userData, setUserData] = useState({});
+  const [allPostData, setAllPostData] = useState([]);
+  const [selectedPost, setSelectedPost] = useState({});
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [likeLottieVisible, setLikeLottieVisible] = useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const [backPressedOnce, setBackPressedOnce] = useState(false);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (backPressedOnce) {
+        BackHandler.exitApp();
+      } else {
+        ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+        setBackPressedOnce(true);
+        setTimeout(() => {
+          setBackPressedOnce(false);
+        }, 2000);
+        return true;
+      }
+    };
+
+    // Add the back handler
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    // Cleanup the back handler when the component is unmounted
+    return () => backHandler.remove();
+  }, [backPressedOnce]);
 
   const downloadImage = async (imageUrl, imageName) => {
     setDownloadImgLoading(true);
-    console.log('Downloading Image: ', imageUrl, ' , ', imageName);
+    // console.log('Downloading Image: ', imageUrl, ' , ', imageName);
     const {config, fs} = RNFetchBlob;
-    const imagePath = `${fs.dirs.DownloadDir}/${imageName}.jpg`;
+    const downloadDir =
+      Platform.OS === 'ios'
+        ? RNFS.DocumentDirectoryPath
+        : RNFS.DownloadDirectoryPath;
+    const imagePath = `${downloadDir}/${imageName}.jpg`;
 
     try {
       const res = await config({
@@ -95,7 +137,7 @@ const HomeScreen = () => {
         },
       }).fetch('GET', imageUrl);
 
-      console.log('Image Downloaded:', res.path());
+      // console.log('Image Downloaded:', res.path());
       setDownloadImgLoading(false);
       successSnackbar('Image Downloaded.');
     } catch (error) {
@@ -106,6 +148,7 @@ const HomeScreen = () => {
   };
 
   const getPostData = async () => {
+    setFeedLoading(true);
     try {
       const user_id = await AsyncStorage.getItem('userId');
       const data = {
@@ -113,26 +156,35 @@ const HomeScreen = () => {
       };
 
       let res = await axios.post(`${BASE_URL}feed`, data);
-      // console.log('res: ', res.data);
+      // console.log('res: ', res.data.data['user_details'][0]);
+      if (res.data.status) {
+        setUserData(res.data.data['user_details'][0]);
+        setAllPostData(res.data.data['feed_data']);
+        setFeedLoading(false);
+      } else {
+        failedSnackbar('Something went wrong!');
+        setFeedLoading(false);
+      }
     } catch (err) {
       console.log('get post data err: ', err);
+      setFeedLoading(false);
       failedSnackbar('Something went wrong!');
     }
   };
 
-  const getPostComments = async () => {
+  const getPostComments = async post_id => {
     setCommentDataLoading(true);
     try {
       const user_id = await AsyncStorage.getItem('userId');
       const data = {
-        // user_id: user_id,
-        user_id: 17,
-        post_id: 5,
+        user_id: user_id,
+        post_id: post_id,
       };
+      console.log('get comment data: ', data);
       let res = await axios.post(`${BASE_URL}show_comments`, data);
-      // console.log('get comment res: ', res.data.data);
+      console.log('get comment res: ', res.data.data['comments']);
       if (res.data.status == true) {
-        setCommentData(res.data.data);
+        setCommentData(res.data.data['comments']);
       } else {
         failedSnackbar('Something went wrong!');
       }
@@ -149,12 +201,12 @@ const HomeScreen = () => {
     try {
       const user_id = await AsyncStorage.getItem('userId');
       const data = {
-        user_id: 17,
-        post_id: 5,
+        user_id: user_id,
+        post_id: selectedPost.post_id,
         comment: commentsMessage,
       };
       let res = await axios.post(`${BASE_URL}insert_comment`, data);
-      console.log('add comment res: ', res.data.status);
+      // console.log('add comment res: ', res.data.status);
       if (res.data.status) {
         const newId = (commentData.length + 1).toString();
         const newCreatedAt = new Date()
@@ -163,13 +215,12 @@ const HomeScreen = () => {
           .replace('T', ' ');
         const newCommentData = {
           id: newId,
-          post_id: '5',
-          user_id: '17',
+          post_id: selectedPost.post_id,
+          user_id: user_id,
           comment: commentsMessage,
+          username: userData.username,
+          profile_picture: userData.profile_picture,
           created_at: newCreatedAt,
-          username: 'Dark',
-          profile_picture:
-            'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
         };
         setCommentData([newCommentData, ...commentData]);
         setCommentsMessage('');
@@ -184,8 +235,50 @@ const HomeScreen = () => {
     }
   };
 
+  const addAndRemoveLike = async post_id => {
+    try {
+      const user_id = await AsyncStorage.getItem('userId');
+      const post = allPostData.find(p => p.post_id === post_id);
+      const updatedPostData = allPostData.map(item =>
+        item.post_id === post_id
+          ? {
+              ...item,
+              likes: item.likes === '1' ? '0' : '1', // Toggle like
+              likes_count:
+                item.likes === '1'
+                  ? (parseInt(item.likes_count) - 1).toString() // Decrement likes
+                  : (parseInt(item.likes_count) + 1).toString(), // Increment likes
+            }
+          : item,
+      );
+
+      setAllPostData(updatedPostData);
+
+      const data = {
+        user_id: user_id,
+        post_id: post_id,
+        like: post.likes == '1' ? 0 : 1,
+      };
+
+      // console.log('data: ', data);
+      let res = await axios.post(`${BASE_URL}insert_and_delete_like`, data);
+      // console.log('Like response: ', res.data);
+    } catch (err) {
+      console.log('Error liking/unliking post: ', err);
+      failedSnackbar('Something went wrong!');
+    }
+  };
+
   useEffect(() => {
-    // getPostData();
+    getPostData();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      getPostData();
+      setRefreshing(false);
+    }, 1500);
   }, []);
 
   const formatDate = dateString => {
@@ -230,135 +323,231 @@ const HomeScreen = () => {
         </View>
       </View>
 
-      {/* Feed Card start */}
-      <FlatList
-        data={feedData}
-        renderItem={({item}) => {
-          return (
-            <View style={{marginTop: 4}}>
-              {/* card header */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 10,
-                  paddingVertical: 10,
-                }}>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('checkprofile')}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}>
-                  <Image
-                    source={{
-                      uri: item.user_img,
-                    }}
-                    style={{width: 35, height: 35, borderRadius: 50}}
-                    resizeMode="cover"
-                  />
-                  <View style={{marginHorizontal: 10, width: '80%'}}>
+      {!feedLoading ? (
+        <>
+          {/* Feed Card start */}
+          <FlatList
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            data={allPostData}
+            renderItem={({item}) => {
+              return (
+                <View style={{marginTop: 4}}>
+                  {/* card header */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 10,
+                      paddingVertical: 10,
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('checkprofile')}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}>
+                      <Image
+                        source={
+                          item.profile_picture != '' &&
+                          item.profile_picture != null
+                            ? {
+                                uri: `${PROFILE_PIC_URL}${item.profile_picture}`,
+                              }
+                            : require('../assets/images/profile/noProfile.png')
+                        }
+                        style={{width: 35, height: 35, borderRadius: 50}}
+                        resizeMode="cover"
+                      />
+                      <View style={{marginHorizontal: 10, width: '80%'}}>
+                        <Text
+                          style={{fontWeight: 'bold', color: '#fff'}}
+                          numberOfLines={1}>
+                          {item.username}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <View>
+                      <Icon name="dots-vertical" size={20} color={'#fff'} />
+                    </View>
+                  </View>
+
+                  {/* image */}
+                  <View>
+                    {selectedPost.post_id == item.post_id &&
+                    likeLottieVisible ? (
+                      <View
+                        style={{
+                          flex: 1,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          position: 'absolute',
+                          zIndex: 99,
+                          width: '100%',
+                          height: (windowHeight * 30) / 100,
+                        }}>
+                        <LottieView
+                          source={require('../assets/lottie/heart.json')}
+                          resizeMode="contain"
+                          loop={false}
+                          speed={2}
+                          style={{width: 250, height: 250}}
+                          autoPlay={true}
+                          onAnimationFinish={() => {
+                            console.log('Animation Finished');
+                            setLikeLottieVisible(false);
+                          }}
+                        />
+                      </View>
+                    ) : null}
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedImage(item.post_img);
+                        setViewImageModal(true);
+                        setSelectedPost(item);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: (windowHeight * 30) / 100,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}>
+                      <Image
+                        source={{uri: `${POST_IMAGE_URL}${item.post_image}`}}
+                        style={{width: '100%', height: '100%'}}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* card footer */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 10,
+                      paddingVertical: 10,
+                    }}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <TouchableOpacity
+                        disabled={likeLottieVisible ? true : false}
+                        onPress={() => {
+                          setSelectedPost(item);
+                          if (item.likes == '0') {
+                            setLikeLottieVisible(true);
+                          }
+                          addAndRemoveLike(item.post_id);
+                        }}>
+                        {item.likes == '1' ? (
+                          <Icon name="heart" size={24} color={'red'} />
+                        ) : (
+                          <Icon name="heart-outline" size={24} color={'#fff'} />
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={{paddingHorizontal: 15}}
+                        onPress={() => {
+                          setSelectedPost(item);
+                          getPostComments(item.post_id);
+                          setCommentData([]);
+                          setCommentModal(true);
+                        }}>
+                        <Icon
+                          name="message-reply-text"
+                          size={24}
+                          color={'#fff'}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity>
+                        <Icon name="share-variant" size={24} color={'#fff'} />
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      disabled={downloadImgLoading ? true : false}
+                      onPress={() => {
+                        setSelectedPost(item);
+                        downloadImage(
+                          `${POST_IMAGE_URL}${item.post_image}`,
+                          `${item.username}_post`,
+                        );
+                      }}>
+                      {downloadImgLoading &&
+                      selectedPost.post_id == item.post_id ? (
+                        <ActivityIndicator size={20} color="#fff" />
+                      ) : (
+                        <Icon
+                          name="tray-arrow-down"
+                          size={24}
+                          color={downloadImgLoading ? 'grey' : '#fff'}
+                        />
+                      )}
+                      {/* <Icon name="tray-arrow-down" size={24} color={'#fff'} /> */}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* card sub footer */}
+                  <View style={{paddingHorizontal: 10}}>
+                    <Text style={{color: '#fff', fontSize: 13}}>
+                      {item.likes_count} likes
+                    </Text>
+                    {item.caption != '' && item.caption != null ? (
+                      <Text
+                        style={{
+                          color: '#fff',
+                          fontWeight: 'bold',
+                          fontSize: 14,
+                        }}>
+                        {item.username}{' '}
+                        <Text
+                          style={{
+                            fontWeight: 'normal',
+                            color: '#fff',
+                            fontSize: 14,
+                          }}>
+                          {item.caption}
+                        </Text>
+                      </Text>
+                    ) : null}
+
+                    {item.comments_count != '0' ? (
+                      <Text
+                        onPress={() => setCommentModal(true)}
+                        style={{color: '#D9E1E6', fontSize: 12, marginTop: 2}}>
+                        View all {item.comments_count} comments
+                      </Text>
+                    ) : null}
+
                     <Text
-                      style={{fontWeight: 'bold', color: '#fff'}}
-                      numberOfLines={1}>
-                      {item.name}
+                      style={{
+                        color: '#D9E1E6',
+                        fontSize: 10,
+                        marginTop: 2,
+                        marginBottom: 10,
+                      }}>
+                      {item.post_publish_date}
                     </Text>
                   </View>
-                </TouchableOpacity>
-                <View>
-                  <Icon name="dots-vertical" size={20} color={'#fff'} />
                 </View>
-              </View>
-
-              {/* image */}
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedImage(item.post_img);
-                  setViewImageModal(true);
-                }}
-                style={{
-                  width: '100%',
-                  height: (windowHeight * 30) / 100,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Image
-                  source={{uri: item.post_img}}
-                  style={{width: '100%', height: '100%'}}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-
-              {/* card footer */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 10,
-                  paddingVertical: 10,
-                }}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  {item.isLiked ? (
-                    <TouchableOpacity>
-                      <Icon name="heart" size={20} color={'red'} />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity>
-                      <Icon name="heart-outline" size={20} color={'#fff'} />
-                    </TouchableOpacity>
-                  )}
-
-                  <TouchableOpacity
-                    style={{paddingHorizontal: 20}}
-                    onPress={() => {
-                      getPostComments();
-                      setCommentData([]);
-                      setCommentModal(true);
-                    }}>
-                    <Icon name="message-reply-text" size={20} color={'#fff'} />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Icon name="share-variant" size={20} color={'#fff'} />
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  disabled={downloadImgLoading ? true : false}
-                  onPress={() =>
-                    downloadImage(item.post_img, `${item.name}_post`)
-                  }>
-                  {/* {downloadImgLoading ? (
-                    <ActivityIndicator size={20} color="#fff" />
-                  ) : (
-                    <Icon name="tray-arrow-down" size={20} color={'#fff'} />
-                  )} */}
-                  <Icon name="tray-arrow-down" size={20} color={'#fff'} />
-                </TouchableOpacity>
-              </View>
-
-              {/* card sub footer */}
-              <View style={{paddingHorizontal: 10}}>
-                <Text style={{color: '#fff'}}>{item.likes} likes</Text>
-                <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 12}}>
-                  {item.name}{' '}
-                  <Text
-                    style={{fontWeight: 'normal', color: '#fff', fontSize: 13}}>
-                    {item.caption}
-                  </Text>
-                </Text>
-                <Text style={{color: 'grey', fontSize: 12, marginTop: 2}}>
-                  View all comments
-                </Text>
-                <Text style={{color: 'grey', fontSize: 10, marginTop: 2}}>
-                  {item.post_date}
-                </Text>
-              </View>
-            </View>
-          );
-        }}
-      />
-      {/* Feed Card end */}
+              );
+            }}
+          />
+          {/* Feed Card end */}
+        </>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
 
       {/* Comment Modal */}
       <Modal
@@ -417,14 +606,16 @@ const HomeScreen = () => {
                               justifyContent: 'flex-start',
                             }}>
                             <Image
-                              source={{
-                                uri: 'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-                              }}
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 50,
-                              }}
+                              source={
+                                userData &&
+                                userData.profile_picture != '' &&
+                                userData.profile_picture != null
+                                  ? {
+                                      uri: `${PROFILE_PIC_URL}${userData.profile_picture}`,
+                                    }
+                                  : require('../assets/images/profile/noProfile.png')
+                              }
+                              style={{width: 40, height: 40, borderRadius: 50}}
                             />
                           </View>
                           <View style={{flex: 1, marginHorizontal: 10}}>
@@ -463,6 +654,7 @@ const HomeScreen = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     flex: 1,
+                    backgroundColor: '#000',
                   }}>
                   <Text
                     style={{fontSize: 20, color: '#fff', fontWeight: 'bold'}}>
@@ -482,9 +674,15 @@ const HomeScreen = () => {
                 }}>
                 <View>
                   <Image
-                    source={{
-                      uri: 'https://images.pexels.com/photos/678783/pexels-photo-678783.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-                    }}
+                    source={
+                      userData &&
+                      userData.profile_picture != '' &&
+                      userData.profile_picture != null
+                        ? {
+                            uri: `${PROFILE_PIC_URL}${userData.profile_picture}`,
+                          }
+                        : require('../assets/images/profile/noProfile.png')
+                    }
                     style={{width: 35, height: 35, borderRadius: 50}}
                   />
                 </View>
@@ -547,11 +745,10 @@ const HomeScreen = () => {
             style={{position: 'absolute', zIndex: 99, top: 10, left: 10}}>
             <Icon name="arrow-left" size={22} color={'#fff'} />
           </TouchableOpacity>
-
           <ImageViewer
             imageUrls={[
               {
-                url: selectedImage,
+                url: `${POST_IMAGE_URL}${selectedPost.post_image}`,
               },
             ]}
             onSwipeDown={() => setViewImageModal(false)}
@@ -579,27 +776,22 @@ const HomeScreen = () => {
 };
 export default HomeScreen;
 
-// const data = [
-//   {
-//     user_id:17,
-//     profile_picture:'',
-//     post_image:'',
-//     caption: '',
-//     likes:40,
-//     comments: [
-//       {
-//         user_id: 5,
-//         profile_picture: '',
-//         comment: 'hehe'
-//       },
-//       {
-//         user_id: 6,
-//         profile_picture: '',
-//         comment: 'haha'
-//       }
-//     ],
-//     post_publish_date: 'Sept 7, 2024'
-
+// const data = {
+//   user_details: {
+//     username: 'dark',
+//     profile_pic: '',
+//     id: 17,
 //   },
-//   {...}
-// ]
+//   feed_data: [
+//     {
+//       user_id:17,
+//       profile_picture:'',
+//       post_image:'',
+//       caption: '',
+//       likes:40,
+//       post_publish_date: 'Sept 7, 2024'
+
+//     },
+//     {...},
+//   ]
+// }

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   Dimensions,
   Image,
   Modal,
@@ -18,7 +19,7 @@ import {BASE_URL} from '@env';
 import {launchImageLibrary} from 'react-native-image-picker';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import failedSnackbar from '../components/SnackBars/failedSnackbar';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -30,6 +31,23 @@ const UploadScreen = () => {
   const [postModal, setPostModal] = useState(false);
   const [postCaption, setPostCaption] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // back button handle
+  const backButtonHandler = () => {
+    navigation.goBack();
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backButtonHandler,
+      );
+      return () => backHandler.remove();
+    }, []),
+  );
+  //  End back handle
 
   const pickImage = () => {
     const options = {

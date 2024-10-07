@@ -1,6 +1,7 @@
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {
+  BackHandler,
   Dimensions,
   FlatList,
   Image,
@@ -23,6 +24,23 @@ const AccountScreen = () => {
   const navigation = useNavigation();
   const [selectedImage, setSelectedImage] = useState('');
   const [viewImageModal, setViewImageModal] = useState(false);
+
+  // back button handle
+  const backButtonHandler = () => {
+    navigation.goBack();
+    return true;
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backButtonHandler,
+      );
+      return () => backHandler.remove();
+    }, []),
+  );
+  //  End back handle
 
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',
