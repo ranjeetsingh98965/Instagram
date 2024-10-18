@@ -1,79 +1,48 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# instagram_clone
+Instagram_clone is a social media platform that allows users to share photos and videos with their followers. The app provides a feed where users can see posts from the accounts they follow, and they can like, comment, and share posts with their own followers.<br/>
 
-# Getting Started
+LOGIN SCREEN<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/0c321862-2b1a-45cd-b41e-d95cd497f6fc" widht="230" height="400" />    
+</p><br/><br/>
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+SIGNUP SCREEN<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/bdcb009e-e64a-4a6d-a928-89644b61dc20" widht="230" height="400" />    
+</p><br/><br/>
 
-## Step 1: Start the Metro Server
+HOME SCREEN<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/95809398-10cc-4f32-8a18-421691e83507" widht="230" height="400" />    
+</p><br/><br/>
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+LIKE POST<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/072c48b1-ca2b-4de6-9253-38669872e526" widht="230" height="400" />    
+</p><br/><br/>
 
-To start Metro, run the following command from the _root_ of your React Native project:
+POST COMMENTS<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/e1f4f685-081f-4fd7-8188-c1bb0c92f1e2" widht="230" height="400" />    
+</p><br/><br/>
 
-```bash
-# using npm
-npm start
+SEARCH SCREEN<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/15767d66-1d78-4ac9-9ee4-9d4b6949e473" widht="230" height="400" />    
+</p><br/><br/>
 
-# OR using Yarn
-yarn start
-```
+UPLOAD POST<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/8ded0bdc-5e7d-440d-85b6-04ce2540af33" widht="230" height="400" />    
+</p><br/><br/>
 
-## Step 2: Start your Application
+ PROFILE SCREEN<br/>
+<p float="left">
+  <img src="https://github.com/ranjeetsingh98965/Instagram-clone-/assets/80505785/631bf33c-0931-4855-a8ca-a25f9744ca27" widht="230" height="400" />    
+</p><br/><br/>
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
 
-### For Android
 
-```bash
-# using npm
-npm run android
 
-# OR using Yarn
-yarn android
-```
 
-### For iOS
 
-```bash
-# using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
-
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
-
-## Step 3: Modifying your App
-
-Now that you have successfully run the app, let's modify it.
-
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
