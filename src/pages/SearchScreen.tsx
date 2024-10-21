@@ -16,6 +16,9 @@ import Feather from 'react-native-vector-icons/Feather';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import {ActivityIndicator} from 'react-native-paper';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import failedSnackbar from '../components/SnackBars/failedSnackbar';
+import {BASE_URL, IMAGE_URL} from '@env';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -25,6 +28,7 @@ const SearchScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedImage, setSelectedImage] = useState('');
   const [viewImageModal, setViewImageModal] = useState(false);
+  const [searchList, setSearchList] = useState([]);
 
   // back button handle
   const backButtonHandler = () => {
@@ -42,6 +46,29 @@ const SearchScreen = () => {
     }, []),
   );
   //  End back handle
+
+  const followAndUnfollow = async () => {
+    try {
+      const data = {
+        search: 'sh',
+      };
+      // console.log('get profile data: ', data);
+      let res = await axios.post(`${BASE_URL}search_users_profile`, data);
+      console.log('search kiya kya: ', res.data.status);
+      if (res.data.status == true) {
+        setSearchList(res.data.data);
+      } else {
+        failedSnackbar('Something went wrong!');
+      }
+    } catch (err) {
+      console.log('get comment err: ', err);
+      failedSnackbar('Something went wrong!');
+    }
+  };
+
+  useEffect(() => {
+    followAndUnfollow();
+  }, []);
 
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',

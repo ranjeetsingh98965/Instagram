@@ -491,7 +491,11 @@ const SignupScreen = () => {
                 alignItems: 'center',
                 paddingRight: 5,
               }}>
-              <Icon name="lock-outline" size={20} color={'#fff'} />
+              <Icon
+                name="file-document-edit-outline"
+                size={20}
+                color={'#fff'}
+              />
             </View>
             <View style={{flex: 1}}>
               <TextInput
