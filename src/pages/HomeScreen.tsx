@@ -231,6 +231,17 @@ const HomeScreen = () => {
     }
   };
 
+  const checkUserProfile = async id => {
+    const user_id = await AsyncStorage.getItem('userId');
+    if (user_id == id) {
+      navigation.navigate('feed', {screen: 'account'});
+    } else {
+      navigation.navigate('checkprofile', {
+        checkUserId: id,
+      });
+    }
+  };
+
   useEffect(() => {
     getPostData();
   }, []);
@@ -307,11 +318,7 @@ const HomeScreen = () => {
                         paddingVertical: 10,
                       }}>
                       <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate('checkprofile', {
-                            checkUserId: item.user_id,
-                          })
-                        }
+                        onPress={() => checkUserProfile(item.user_id)}
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',

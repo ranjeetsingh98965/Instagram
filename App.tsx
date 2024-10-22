@@ -19,10 +19,13 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const App = () => {
-  const BottomNavigationBar = () => {
+  const BottomNavigationBar = ({route}) => {
+    // console.log('route: ', route.params);
     return (
       <Tab.Navigator
-        initialRouteName="home"
+        initialRouteName={
+          route.params == undefined ? 'home' : route.params.screen
+        }
         screenOptions={{
           tabBarStyle: {
             backgroundColor: '#000',

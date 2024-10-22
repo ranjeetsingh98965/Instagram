@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   SafeAreaView,
   View,
@@ -10,6 +10,7 @@ import {
   Touchable,
   TouchableOpacity,
   BackHandler,
+  Text,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -29,6 +30,10 @@ const SearchScreen = () => {
   const [selectedImage, setSelectedImage] = useState('');
   const [viewImageModal, setViewImageModal] = useState(false);
   const [searchList, setSearchList] = useState([]);
+  const [searchModal, setSearchModal] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchresponseCode, setSearchresponseCode] = useState(false);
+  const timeoutRef = useRef(null);
 
   // back button handle
   const backButtonHandler = () => {
@@ -47,28 +52,44 @@ const SearchScreen = () => {
   );
   //  End back handle
 
-  const followAndUnfollow = async () => {
+  const startTimer = (txt: String) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      searchUser(txt);
+    }, 1000);
+  };
+
+  const searchUser = async (txt: String) => {
+    setSearchLoading(true);
     try {
       const data = {
-        search: 'sh',
+        search: txt,
       };
-      // console.log('get profile data: ', data);
-      let res = await axios.post(`${BASE_URL}search_users_profile`, data);
-      console.log('search kiya kya: ', res.data.status);
-      if (res.data.status == true) {
-        setSearchList(res.data.data);
+      // console.log('search data: ', data);
+      if (txt != '') {
+        let res = await axios.post(`${BASE_URL}search_users_profile`, data);
+        // console.log('search res: ', res.data.data);
+        if (res.data.status == true) {
+          setSearchList(res.data.data);
+          setSearchresponseCode(true);
+          setSearchLoading(false);
+        } else {
+          failedSnackbar('Something went wrong!');
+          setSearchLoading(false);
+        }
       } else {
-        failedSnackbar('Something went wrong!');
+        setSearchList([]);
+        setSearchLoading(false);
       }
     } catch (err) {
-      console.log('get comment err: ', err);
+      console.log('search err: ', err);
+      setSearchLoading(false);
       failedSnackbar('Something went wrong!');
     }
   };
-
-  useEffect(() => {
-    followAndUnfollow();
-  }, []);
 
   const imageData = [
     'https://images.pexels.com/photos/158063/bellingrath-gardens-alabama-landscape-scenic-158063.jpeg',
@@ -95,22 +116,25 @@ const SearchScreen = () => {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#000'}}>
       {/* Header */}
-      <View
+      <TouchableOpacity
+        onPress={() => {
+          setSearchList([]);
+          setSearchText('');
+          setSearchresponseCode(false);
+          setSearchModal(true);
+        }}
         style={{
           backgroundColor: '#1A1A1A',
           flexDirection: 'row',
           paddingHorizontal: 10,
           alignItems: 'center',
+          paddingVertical: 15,
         }}>
         <Feather name="search" size={20} color={'#fff'} />
-        <TextInput
-          placeholder="Search..."
-          placeholderTextColor={'grey'}
-          onChangeText={txt => setSearchText(txt)}
-          value={searchText}
-          style={{flex: 1, marginHorizontal: 10, color: '#fff'}}
-        />
-      </View>
+        <View style={{marginHorizontal: 10}}>
+          <Text style={{color: 'grey'}}>Search...</Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Images */}
       <FlatList
@@ -176,6 +200,133 @@ const SearchScreen = () => {
               height: windowHeight,
             }}
           />
+        </View>
+      </Modal>
+
+      <Modal
+        visible={searchModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSearchModal(false)}>
+        <View style={{flex: 1, backgroundColor: '#000'}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <TouchableOpacity
+              onPress={() => setSearchModal(false)}
+              style={{paddingHorizontal: 10}}>
+              <Icon name="close" size={22} color={'#fff'} />
+            </TouchableOpacity>
+            <View
+              style={{
+                backgroundColor: '#1A1A1A',
+                flexDirection: 'row',
+                paddingHorizontal: 10,
+                alignItems: 'center',
+                borderRadius: 10,
+                marginRight: 50,
+              }}>
+              <Feather name="search" size={20} color={'#fff'} />
+              <TextInput
+                placeholder="Search..."
+                placeholderTextColor={'grey'}
+                onChangeText={txt => {
+                  setSearchText(txt);
+                  startTimer(txt);
+                  setSearchresponseCode(false);
+                }}
+                value={searchText}
+                style={{flex: 1, marginHorizontal: 10, color: '#fff'}}
+              />
+            </View>
+          </View>
+
+          {/* search results */}
+          {!searchLoading ? (
+            <>
+              {searchList.length > 0 ? (
+                <FlatList
+                  data={searchList}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{paddingVertical: 10}}
+                  renderItem={({item}) => {
+                    return (
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate('checkprofile', {
+                            checkUserId: item.id,
+                          })
+                        }
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          padding: 10,
+                          marginVertical: 2,
+                        }}>
+                        <View>
+                          <Image
+                            source={
+                              item.profile_picture != '' &&
+                              item.profile_picture != null
+                                ? {
+                                    uri: `${IMAGE_URL}${item.profile_picture}`,
+                                  }
+                                : require('../assets/images/profile/noProfile.png')
+                            }
+                            style={{
+                              width: 50,
+                              height: 50,
+                              borderRadius: 50,
+                              borderWidth: 0.5,
+                              borderColor: '#fff',
+                            }}
+                            resizeMode="cover"
+                          />
+                        </View>
+                        <View style={{flex: 1, marginHorizontal: 10}}>
+                          <View>
+                            <Text style={{fontWeight: 'bold', color: '#fff'}}>
+                              {item.username}{' '}
+                            </Text>
+                          </View>
+                          <View>
+                            <Text style={{fontSize: 11, color: 'grey'}}>
+                              {item.bio}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              ) : (
+                <>
+                  {searchresponseCode == true ? (
+                    <View
+                      style={{
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 20,
+                      }}>
+                      {/* <ActivityIndicator size="small" color="#fff" /> */}
+                      <Text style={{color: 'grey'}}>No user found!</Text>
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </>
+          ) : (
+            <View
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: 20,
+              }}>
+              <ActivityIndicator size="small" color="#fff" />
+            </View>
+          )}
         </View>
       </Modal>
     </SafeAreaView>
