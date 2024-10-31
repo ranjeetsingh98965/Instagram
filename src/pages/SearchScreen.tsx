@@ -20,6 +20,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import failedSnackbar from '../components/SnackBars/failedSnackbar';
 import {BASE_URL, IMAGE_URL} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -88,6 +89,17 @@ const SearchScreen = () => {
       console.log('search err: ', err);
       setSearchLoading(false);
       failedSnackbar('Something went wrong!');
+    }
+  };
+
+  const checkUserProfile = async id => {
+    const user_id = await AsyncStorage.getItem('userId');
+    if (user_id == id) {
+      navigation.navigate('feed', {screen: 'account'});
+    } else {
+      navigation.navigate('checkprofile', {
+        checkUserId: id,
+      });
     }
   };
 
@@ -254,11 +266,9 @@ const SearchScreen = () => {
                   renderItem={({item}) => {
                     return (
                       <TouchableOpacity
-                        onPress={() =>
-                          navigation.navigate('checkprofile', {
-                            checkUserId: item.id,
-                          })
-                        }
+                        onPress={() => {
+                          checkUserProfile(item.id);
+                        }}
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',

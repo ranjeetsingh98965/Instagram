@@ -29,6 +29,7 @@ import axios from 'axios';
 import {BASE_URL, IMAGE_URL} from '@env';
 import RNFS from 'react-native-fs';
 import LottieView from 'lottie-react-native';
+import {LazyLoadImage} from 'react-native-lazy-load-image';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
@@ -46,7 +47,7 @@ const HomeScreen = () => {
   const [userData, setUserData] = useState({});
   const [allPostData, setAllPostData] = useState([]);
   const [selectedPost, setSelectedPost] = useState({});
-  const [feedLoading, setFeedLoading] = useState(false);
+  const [feedLoading, setFeedLoading] = useState(true);
   const [likeLottieVisible, setLikeLottieVisible] = useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -118,7 +119,7 @@ const HomeScreen = () => {
       };
 
       let res = await axios.post(`${BASE_URL}feed`, data);
-      console.log('get post res: ', res.data.status);
+      console.log('get post res: ', res.data.data['user_details'][0]);
       if (res.data.status) {
         setUserData(res.data.data['user_details'][0]);
         setAllPostData(res.data.data['feed_data']);
@@ -168,7 +169,7 @@ const HomeScreen = () => {
         comment: commentsMessage,
       };
       let res = await axios.post(`${BASE_URL}insert_comment`, data);
-      // console.log('add comment res: ', res.data.status);
+      console.log('add comment res: ', res.data);
       if (res.data.status) {
         const newId = (commentData.length + 1).toString();
         const newCreatedAt = new Date()
@@ -384,18 +385,28 @@ const HomeScreen = () => {
                           setSelectedPost(item);
                         }}
                         style={{
-                          width: '100%',
-                          height: (windowHeight * 30) / 100,
+                          // width: '100%',
+                          // height: (windowHeight * 30) / 100,
                           justifyContent: 'center',
                           alignItems: 'center',
                         }}>
-                        <Image
+                        {/* <Image
                           source={{uri: `${IMAGE_URL}${item.post_image}`}}
                           style={{
                             width: '100%',
                             height: '100%',
                             backgroundColor: '#000',
                           }}
+                          resizeMode="contain"
+                        /> */}
+                        <LazyLoadImage
+                          source={{uri: `${IMAGE_URL}${item.post_image}`}}
+                          style={{
+                            width: windowWidth,
+                            height: (windowHeight * 30) / 100,
+                            backgroundColor: '#000',
+                          }}
+                          color={'#fff'}
                           resizeMode="contain"
                         />
                       </Pressable>
